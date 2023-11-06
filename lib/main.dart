@@ -15,42 +15,34 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   TextEditingController _controller = TextEditingController();
+  TextEditingController _tournamentNameController = TextEditingController();
   String inputValue = '';
   String tournamentResult = '';
+  String tournamentName = '';
 
   Future<void> _makeTournament(BuildContext context) async {
     setState(() {
       inputValue = _controller.text;
+      tournamentName = _tournamentNameController.text;
     });
+    if (inputValue.isEmpty || tournamentName.isEmpty) {
+      print("Fields are empty");
+      return;
+    }
     if (inputValue == '') {
       print("No number entered");
       return;
     }
-    final apiUrl = Uri.parse('http://localhost:5000/maketournament');
-    final response = await http.post(
-      apiUrl,
-      body: {'number': inputValue}, // Send the input value to Flask
+    int numberOfTeams = int.tryParse(inputValue) ?? 0;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TournamentDetailsPage(
+          tournamentName: tournamentName,
+          numberOfTeams: numberOfTeams,
+        ),
+      ),
     );
-    print('Response Status Code: ${response.statusCode}');
-    print('Response Body: ${response.body}');
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> result = json.decode(response.body);
-
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => ResultPage(result)),
-      );
-      setState(() {
-        tournamentResult = result.toString();
-      });
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => ResultPage(result)),
-      );
-      print('Data sent successfully!');
-    } else {
-      print('Error sending data to Flask.');
-    }
   }
 
   @override
@@ -79,10 +71,24 @@ class _MyAppState extends State<MyApp> {
                   width: 250,
                   child: Center(
                     child: TextField(
+                      controller: _tournamentNameController,
+                      keyboardType: TextInputType.text,
+                      decoration: InputDecoration(
+                        labelText: 'Tournament name',
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Center(
+                child: Container(
+                  width: 250,
+                  child: Center(
+                    child: TextField(
                       controller: _controller,
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
-                        labelText: 'Enter the total number of teams(even)',
+                        labelText: 'Number of teams(even)',
                       ),
                     ),
                   ),
@@ -91,7 +97,7 @@ class _MyAppState extends State<MyApp> {
               const Text('\n'),
               ElevatedButton(
                 onPressed: () => _makeTournament(context),
-                child: Text('View Tournament'),
+                child: Text('Tournament Details'),
               ),
               // SizedBox(height: 20),
               // Text('Tournament Schedule:'),
@@ -99,6 +105,90 @@ class _MyAppState extends State<MyApp> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class TournamentDetailsPage extends StatefulWidget {
+  final String tournamentName;
+  final int numberOfTeams;
+
+  TournamentDetailsPage(
+      {required this.tournamentName, required this.numberOfTeams});
+
+  @override
+  _TournamentDetailsPageState createState() => _TournamentDetailsPageState();
+}
+
+class _TournamentDetailsPageState extends State<TournamentDetailsPage> {
+  Map<int, String> tournamentTeams = {};
+
+  Future<void> _sendDataToServer(BuildContext context) async {
+    List<String> teamNames = tournamentTeams.values.toList();
+
+    var requestBody = jsonEncode({
+      'numberOfTeams': widget.numberOfTeams,
+      'teamNames': teamNames,
+    });
+
+    var response = await http.post(
+      Uri.parse(
+          'http://localhost:5000/maketournament'), // Replace with your server endpoint
+      headers: {'Content-Type': 'application/json'},
+      body: requestBody,
+    );
+
+    if (response.statusCode == 200) {
+      print('Data sent successfully!');
+      var jsonData = json.decode(response.body);
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => ResultPage(jsonData)),
+      );
+      // Handle successful response if needed
+    } else {
+      print('Error sending data to server.');
+      // Handle error response if needed
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.tournamentName),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ListView.builder(
+          itemCount: widget.numberOfTeams,
+          itemBuilder: (context, index) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: TextField(
+                onChanged: (teamName) {
+                  tournamentTeams[index] = teamName;
+                },
+                decoration: InputDecoration(
+                  labelText: 'Enter team name for Team ${index + 1}',
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          //     Navigator.push(
+          //   context,
+          //   MaterialPageRoute(builder: (context) => ResultPage()),
+          // );
+          // Perform actions with the tournamentTeams map, e.g., send it to the server.
+          _sendDataToServer(context);
+          print('Tournament Teams: $tournamentTeams');
+        },
+        child: Icon(Icons.save),
       ),
     );
   }

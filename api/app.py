@@ -6,8 +6,10 @@ app = Flask(__name__)
 @app.route('/maketournament', methods=['POST'])
 def makeTournament():
     try:
-        data = request.form['number']
-        n_2 = int(data)
+        data = request.get_json()
+        numberOfTeams = data.get('numberOfTeams')
+        teamNames = data.get('teamNames')
+        n_2 = int(numberOfTeams)
         n = n_2 // 2
         roundt1 = []
         roundt2 = []
@@ -20,7 +22,7 @@ def makeTournament():
 
         new_round = []
         for i in range(len(roundt1)):
-            new_round.append(str(roundt1[i]) + " vs " + str(roundt2[i]))
+            new_round.append(teamNames[roundt1[i]-1] + " vs " + teamNames[roundt2[i]-1])
         
         df = pd.DataFrame()
         df["round1"] = new_round
@@ -40,9 +42,9 @@ def makeTournament():
                     roundt1[j] += 1
             new_round2 = []
             for j in range(len(roundt1)):
-                new_round2.append(str(roundt1[j]) + " vs " + str(roundt2[j]))
+                new_round2.append(teamNames[roundt1[j]-1] + " vs " + teamNames[roundt2[j]-1])
             df["round" + str(i)] = new_round2
-        
+        print(df)
         result = df.to_dict()
         return jsonify(result)
     except Exception as e:
