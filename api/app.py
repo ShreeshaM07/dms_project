@@ -1,5 +1,8 @@
 import pandas as pd
 from flask import Flask, request, jsonify
+import datetime
+
+
 
 app = Flask(__name__)
 
@@ -46,9 +49,52 @@ def makeTournament():
             df["round" + str(i)] = new_round2
         print(df)
         result = df.to_dict()
+        
         return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 400
+    
+
+@app.route('/scheduletournament', methods=['POST'])
+def create_dated_schedule():
+    try:
+        data = request.get_json()
+        jsonData = data.get('jsonData')
+        df = pd.DataFrame.from_dict(jsonData)
+        
+        # Process jsonData to create a 2D list with matches of specific rounds
+        column_lists = [df[column].tolist() for column in df.columns]
+        
+        # Combine the lists into a 2D list (transpose the list of lists)
+        dated_schedule = list(column_lists)
+        # print(dated_schedule)
+        # Calculate the date of the Saturday four weeks from today 
+        today = datetime.date.today()
+        two_weeks_later = today + datetime.timedelta(days=(26 - today.weekday()))
+        
+        # Iterate through the 2D list and add dates to each round of matches
+        for i in range(len(dated_schedule)):
+            # Format the date as 'YYYY-MM-DD'
+            formatted_date = two_weeks_later.strftime('%d-%m-%Y')
+            for j in range(len(dated_schedule[i])//2):
+            
+                # Add the formatted date to the beginning of each round of matches
+                dated_schedule[i][j] =  formatted_date + '\n' + dated_schedule[i][j]
+            for j in range(len(dated_schedule[i])//2,len(dated_schedule[i])):
+                sunday_date=two_weeks_later+datetime.timedelta(days=1)
+                dated_schedule[i][j] =  sunday_date.strftime('%d-%m-%Y') + '\n' + dated_schedule[i][j]
+                #print(dated_schedule[i][j])
+            # Increment the date by 7 days for the next round of matches
+            two_weeks_later += datetime.timedelta(days=7)
+        print(dated_schedule)
+        # Return the updated 2D list as a response
+        return jsonify({'dated_schedule': dated_schedule})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+
+
+
 
 if __name__ == '__main__':
     app.run(host='localhost', port=5000)

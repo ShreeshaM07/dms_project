@@ -19,6 +19,31 @@ class _MyAppState extends State<MyApp> {
   String inputValue = '';
   String tournamentResult = '';
   String tournamentName = '';
+  int _selectedIndex = 0;
+
+  // final List<Widget> _pages = [
+  //   MyApp(), // Create Tournament Page
+  //   ScheduleDates(), // Schedule Dates Page
+  // ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    if (index == 0) {
+      // Navigate to Create Tournament page
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => MyApp()),
+      );
+    } else if (index == 1) {
+      // Navigate to ScheduleDates page
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => ScheduleDates()),
+      );
+    }
+  }
 
   Future<void> _makeTournament(BuildContext context) async {
     setState(() {
@@ -105,6 +130,21 @@ class _MyAppState extends State<MyApp> {
             ],
           ),
         ),
+        bottomNavigationBar: BottomNavigationBar(
+          items: [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: 'Create Tournament',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.calendar_today),
+              label: 'See Schedules',
+            ),
+          ],
+          currentIndex: _selectedIndex,
+          selectedItemColor: Colors.blue,
+          onTap: _onItemTapped,
+        ),
       ),
     );
   }
@@ -144,7 +184,8 @@ class _TournamentDetailsPageState extends State<TournamentDetailsPage> {
       var jsonData = json.decode(response.body);
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => ResultPage(jsonData)),
+        MaterialPageRoute(
+            builder: (context) => ResultPage(jsonData, widget.tournamentName)),
       );
       // Handle successful response if needed
     } else {
@@ -196,8 +237,38 @@ class _TournamentDetailsPageState extends State<TournamentDetailsPage> {
 
 class ResultPage extends StatelessWidget {
   final Map<String, dynamic> jsonData;
+  final String tournamentName;
 
-  ResultPage(this.jsonData);
+  ResultPage(this.jsonData, this.tournamentName);
+
+  Future<void> createDatedSchedule(BuildContext context) async {
+    //call some function in app.py and use df_global(find a better way as this
+    //may not work when more than 1 tournament is created at once)(USE jsonData)
+    // and add dates to the
+    //strings store all these in 1D 1 List and then store it in database.
+    //in ScheduleDates page give options to select which league user wants to
+    //access using a dropdown menu with all the already created and stored in
+    //database leagues and on selecting display the list as cards.
+    try {
+      var response = await http.post(
+        Uri.parse(
+            'http://localhost:5000/scheduletournament'), // Replace with your server endpoint
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'jsonData': jsonData}),
+      );
+
+      if (response.statusCode == 200) {
+        print('Dated schedule created successfully!');
+        // Handle successful response if needed
+      } else {
+        print('Error creating dated schedule.');
+        // Handle error response if needed
+      }
+    } catch (e) {
+      print('Error: $e');
+      // Handle exceptions if any
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -206,7 +277,7 @@ class ResultPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Tournament Schedule'),
+        title: Text(this.tournamentName + ' Tournament Schedule'),
       ),
       body: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -228,6 +299,88 @@ class ResultPage extends StatelessWidget {
           }).toList(),
         ),
       ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.calendar_today),
+            label: 'Schedule',
+          ),
+          // BottomNavigationBarItem(
+          //   icon: Icon(Icons.table_chart),
+          //   label: 'Points Table',
+          // ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+        ],
+        selectedItemColor: Colors.grey, // Set the selected tab color
+        unselectedItemColor: Colors.grey,
+        onTap: (index) {
+          if (index == 0) {
+            //Navigate to ScheduleDates page
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => ScheduleDates()),
+            );
+          }
+          // } else if (index == 1) {
+          //   // Navigate to PointsTable page
+          //   Navigator.push(
+          //     context,
+          //     MaterialPageRoute(builder: (context) => PointsTable()),
+          //   );
+          // }
+          else {
+            Navigator.popUntil(
+                context, ModalRoute.withName(Navigator.defaultRouteName));
+            // Navigate to PointsTable page
+            // Add PointsTable widget implementation and navigate to it
+          }
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // Function to create dated schedule
+          createDatedSchedule(context);
+        },
+        child: Icon(Icons.add),
+        tooltip: 'Create Schedule With Dates',
+      ),
+    );
+  }
+}
+
+class ScheduleDates extends StatefulWidget {
+  @override
+  _ScheduleDatesScreen createState() => _ScheduleDatesScreen();
+}
+
+class _ScheduleDatesScreen extends State<ScheduleDates> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Schedule'),
+      ),
+      body: Text('Nothing yet'),
+    );
+  }
+}
+
+class PointsTable extends StatefulWidget {
+  @override
+  _PointsTableScreen createState() => _PointsTableScreen();
+}
+
+class _PointsTableScreen extends State<PointsTable> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Points Table'),
+      ),
+      body: Text('Nothing yet'),
     );
   }
 }
