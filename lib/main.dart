@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+//import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:path/path.dart';
 
 void main() {
+  sqfliteFfiInit();
+  databaseFactory = databaseFactoryFfi;
   runApp(MaterialApp(
     debugShowCheckedModeBanner: false,
     home: MyApp(),
@@ -26,23 +31,25 @@ class _MyAppState extends State<MyApp> {
   //   ScheduleDates(), // Schedule Dates Page
   // ];
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-    if (index == 0) {
-      // Navigate to Create Tournament page
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => MyApp()),
-      );
-    } else if (index == 1) {
-      // Navigate to ScheduleDates page
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => ScheduleDates()),
-      );
-    }
+  void Function(int)? _onItemTapped(BuildContext context) {
+    return (int index) {
+      setState(() {
+        _selectedIndex = index;
+      });
+      if (index == 0) {
+        // Navigate to Create Tournament page
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => MyApp()),
+        );
+      } else if (index == 1) {
+        // Navigate to ScheduleDates page
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => ScheduleDates()),
+        );
+      }
+    };
   }
 
   Future<void> _makeTournament(BuildContext context) async {
@@ -143,7 +150,7 @@ class _MyAppState extends State<MyApp> {
           ],
           currentIndex: _selectedIndex,
           selectedItemColor: Colors.blue,
-          onTap: _onItemTapped,
+          onTap: _onItemTapped(context),
         ),
       ),
     );
@@ -251,16 +258,38 @@ class ResultPage extends StatelessWidget {
     //database leagues and on selecting display the list as cards.
     try {
       var response = await http.post(
-        Uri.parse(
-            'http://localhost:5000/scheduletournament'), // Replace with your server endpoint
+        Uri.parse('http://localhost:5000/scheduletournament'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'jsonData': jsonData}),
       );
 
       if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Dated schedule created successfully'),
+        ));
         print('Dated schedule created successfully!');
+        var datedSchedule = jsonDecode(response.body)['dated_schedule'];
+
+        // Process dated_schedule and store it in the database
+        for (var i = 0; i < datedSchedule.length; i++) {
+          var round = i + 1;
+          var roundMatches = datedSchedule[i];
+          for (var j = 0; j < roundMatches.length; j++) {
+            var matchDetails = roundMatches[j].split('\n');
+            var date = matchDetails[0];
+            var match = matchDetails[1];
+
+            // Store the data into the database
+            await DatabaseHelper()
+                .saveTournament(tournamentName, date, match, round);
+          }
+        }
+
         // Handle successful response if needed
       } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Error creating dated schedule.'),
+        ));
         print('Error creating dated schedule.');
         // Handle error response if needed
       }
@@ -353,18 +382,221 @@ class ResultPage extends StatelessWidget {
 
 class ScheduleDates extends StatefulWidget {
   @override
-  _ScheduleDatesScreen createState() => _ScheduleDatesScreen();
+  _ScheduleDatesState createState() => _ScheduleDatesState();
 }
 
-class _ScheduleDatesScreen extends State<ScheduleDates> {
+class _ScheduleDatesState extends State<ScheduleDates> {
+  DatabaseHelper _databaseHelper = DatabaseHelper();
+  Set<String> tournamentNames = {};
+  String selectedTournament = '';
+  List<Map<String, dynamic>> tournamentSchedule = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTournamentNames();
+  }
+
+  Future<void> _loadTournamentNames() async {
+    List<String> names = await _databaseHelper.getTournamentNames();
+    setState(() {
+      tournamentNames = names.toSet();
+    });
+  }
+
+  Future<void> _loadTournamentSchedule() async {
+    List<Map<String, dynamic>> schedule =
+        await _databaseHelper.getTournamentSchedule(selectedTournament);
+    setState(() {
+      tournamentSchedule = schedule;
+    });
+  }
+
+  Future<void> _clearDatabase(BuildContext context) async {
+    bool confirmClear = await _showClearDatabaseConfirmationDialog(context);
+    if (confirmClear) {
+      await _databaseHelper.clearDatabase();
+      setState(() {
+        // Reset UI state or variables related to the database if necessary.
+      });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Deleted Database'),
+      ));
+      print('Deleted Database');
+    }
+  }
+
+  Future<bool> _showClearDatabaseConfirmationDialog(
+      BuildContext context) async {
+    bool? result = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Clear Database'),
+          content: Text(
+              'Are you sure you want to clear the entire database? This action cannot be undone.'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text('Clear'),
+            ),
+          ],
+        );
+      },
+    );
+
+    return result ?? false;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Schedule'),
       ),
-      body: Text('Nothing yet'),
+      body: Column(
+        children: [
+          DropdownButton<String>(
+            value: selectedTournament.isEmpty ? null : selectedTournament,
+            items: tournamentNames.map((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(value),
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
+              setState(() {
+                selectedTournament = newValue ?? '';
+                _loadTournamentSchedule();
+              });
+            },
+            hint: Text('Select a tournament'),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: tournamentSchedule.length,
+              itemBuilder: (context, index) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Card(
+                      elevation: 2,
+                      child: ListTile(
+                        subtitle: Center(
+                            child: Text(tournamentSchedule[index]['date'])),
+                        title: Center(
+                            child: Text(
+                                tournamentSchedule[index]['matchDetails'])),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: Align(
+        alignment: Alignment.bottomRight,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: ElevatedButton(
+            onPressed: () {
+              _clearDatabase(context);
+            },
+            child: Text('Clear Database'),
+          ),
+        ),
+      ),
     );
+  }
+}
+
+class DatabaseHelper {
+  static final DatabaseHelper _instance = DatabaseHelper._internal();
+  static Database? _database;
+
+  factory DatabaseHelper() {
+    return _instance;
+  }
+
+  DatabaseHelper._internal();
+
+  Future<Database> get database async {
+    if (_database != null) {
+      return _database!;
+    }
+    _database = await _initDatabase();
+    return _database!;
+  }
+
+  Future<Database> _initDatabase() async {
+    String databasesPath = await getDatabasesPath();
+    String path = join(databasesPath, 'tournaments_1.db');
+    return await openDatabase(path, version: 1, onCreate: _createDb);
+  }
+
+  void _createDb(Database db, int version) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS tournaments_1 (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        tournamentName TEXT,
+        date TEXT,
+        matchDetails TEXT,
+        round INTEGER
+      )
+    ''');
+  }
+
+  Future<void> saveTournament(String tournamentName, String date,
+      String matchDetails, int round) async {
+    Database db = await database;
+
+    await db.insert(
+      'tournaments_1',
+      {
+        'tournamentName': tournamentName,
+        'date': date,
+        'matchDetails': matchDetails,
+        'round': round,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<List<String>> getTournamentNames() async {
+    Database db = await database;
+    List<Map<String, dynamic>> result = await db.query('tournaments_1');
+    List<String> tournamentNames = [];
+
+    for (var entry in result) {
+      String name = entry['tournamentName'] as String;
+      if (!tournamentNames.contains(name)) {
+        tournamentNames.add(name);
+      }
+    }
+
+    return tournamentNames;
+  }
+
+  Future<List<Map<String, dynamic>>> getTournamentSchedule(
+      String tournamentName) async {
+    Database db = await database;
+    List<Map<String, dynamic>> result = await db.query(
+      'tournaments_1',
+      where: 'tournamentName = ?',
+      whereArgs: [tournamentName],
+    );
+    return result;
+  }
+
+  Future<void> clearDatabase() async {
+    Database db = await database;
+    await db.delete('tournaments_1');
   }
 }
 
