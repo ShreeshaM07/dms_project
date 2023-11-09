@@ -201,42 +201,105 @@ class _TournamentDetailsPageState extends State<TournamentDetailsPage> {
     }
   }
 
+  Future<void> _sendHomeAwayDataToServer(BuildContext context) async {
+    List<String> teamNames = tournamentTeams.values.toList();
+
+    var requestBody = jsonEncode({
+      'numberOfTeams': widget.numberOfTeams,
+      'teamNames': teamNames,
+    });
+
+    var response = await http.post(
+      Uri.parse(
+          'http://localhost:5000/homeawayscheduling'), // Replace with your server endpoint
+      headers: {'Content-Type': 'application/json'},
+      body: requestBody,
+    );
+
+    if (response.statusCode == 200) {
+      print('Data sent successfully!');
+      var jsonData = json.decode(response.body);
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => ResultPage(jsonData, widget.tournamentName)),
+      );
+      // Handle successful response if needed
+    } else {
+      print('Error sending data to server.');
+      // Handle error response if needed
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.tournamentName),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView.builder(
-          itemCount: widget.numberOfTeams,
-          itemBuilder: (context, index) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: TextField(
-                onChanged: (teamName) {
-                  tournamentTeams[index] = teamName;
-                },
-                decoration: InputDecoration(
-                  labelText: 'Enter team name for Team ${index + 1}',
-                ),
-              ),
-            );
-          },
+      body: Center(
+        child: Container(
+          width: 400,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ListView.builder(
+              itemCount: widget.numberOfTeams,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: TextField(
+                    onChanged: (teamName) {
+                      tournamentTeams[index] = teamName;
+                    },
+                    decoration: InputDecoration(
+                      labelText: 'Enter team name for Team ${index + 1}',
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          //     Navigator.push(
-          //   context,
-          //   MaterialPageRoute(builder: (context) => ResultPage()),
-          // );
-          // Perform actions with the tournamentTeams map, e.g., send it to the server.
-          _sendDataToServer(context);
-          print('Tournament Teams: $tournamentTeams');
-        },
-        child: Icon(Icons.save),
+      floatingActionButton: Stack(
+        children: <Widget>[
+          Positioned(
+            right: 50,
+            bottom: 50,
+            child: FloatingActionButton(
+              onPressed: () {
+                //     Navigator.push(
+                //   context,
+                //   MaterialPageRoute(builder: (context) => ResultPage()),
+                // );
+                // Perform actions with the tournamentTeams map, e.g., send it to the server.
+                _sendDataToServer(context);
+                print('Tournament Teams: $tournamentTeams');
+              },
+              child: Icon(Icons.save),
+              tooltip: 'Neutral Matchup',
+              heroTag: 'neutralmatchup',
+            ),
+          ),
+          Positioned(
+            right: 150,
+            bottom: 50,
+            child: FloatingActionButton(
+              onPressed: () {
+                //     Navigator.push(
+                //   context,
+                //   MaterialPageRoute(builder: (context) => ResultPage()),
+                // );
+                // Perform actions with the tournamentTeams map, e.g., send it to the server.
+                _sendHomeAwayDataToServer(context);
+                print('Tournament Teams: $tournamentTeams');
+              },
+              child: Icon(Icons.airplanemode_active),
+              tooltip: 'Home Away Matchup',
+              heroTag: 'homeawaymatchup',
+            ),
+          )
+        ],
       ),
     );
   }
