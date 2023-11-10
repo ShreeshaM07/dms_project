@@ -13,44 +13,89 @@ def makeTournament():
         numberOfTeams = data.get('numberOfTeams')
         teamNames = data.get('teamNames')
         n_2 = int(numberOfTeams)
-        n = n_2 // 2
-        roundt1 = []
-        roundt2 = []
-        roundt1.append(n_2)
-        roundt2.append(1)
-        
-        for i in range(2, n + 1):
-            roundt1.append(n_2 - i + 1)
-            roundt2.append(i)
+        if(n_2%2==0):
+            n = n_2 // 2
+            roundt1 = []
+            roundt2 = []
+            roundt1.append(n_2)
+            roundt2.append(1)
+            
+            for i in range(2, n + 1):
+                roundt1.append(n_2 - i + 1)
+                roundt2.append(i)
 
-        new_round = []
-        for i in range(len(roundt1)):
-            new_round.append(teamNames[roundt1[i]-1] + " vs " + teamNames[roundt2[i]-1])
-        
-        df = pd.DataFrame()
-        df["round1"] = new_round
-        
-        for i in range(2, n_2):
-            for j in range(len(roundt1)):
-                if roundt1[j] != n_2 and roundt2[j] != n_2:
-                    roundt1[j] += 1
-                    if roundt1[j] > n_2 - 1:
-                        roundt1[j] -= (n_2 - 1)
-                    roundt2[j] += 1
-                    if roundt2[j] > n_2 - 1:
-                        roundt2[j] -= (n_2 - 1)
-                elif roundt1[j] == n_2:
-                    roundt2[j] += 1
-                elif roundt2[j] == n_2:
-                    roundt1[j] += 1
-            new_round2 = []
-            for j in range(len(roundt1)):
-                new_round2.append(teamNames[roundt1[j]-1] + " vs " + teamNames[roundt2[j]-1])
-            df["round" + str(i)] = new_round2
-        print(df)
-        result = df.to_dict()
-        
-        return jsonify(result)
+            new_round = []
+            for i in range(len(roundt1)):
+                new_round.append(teamNames[roundt1[i]-1] + " vs " + teamNames[roundt2[i]-1])
+            
+            df = pd.DataFrame()
+            df["round1"] = new_round
+            
+            for i in range(2, n_2):
+                for j in range(len(roundt1)):
+                    if roundt1[j] != n_2 and roundt2[j] != n_2:
+                        roundt1[j] += 1
+                        if roundt1[j] > n_2 - 1:
+                            roundt1[j] -= (n_2 - 1)
+                        roundt2[j] += 1
+                        if roundt2[j] > n_2 - 1:
+                            roundt2[j] -= (n_2 - 1)
+                    elif roundt1[j] == n_2:
+                        roundt2[j] += 1
+                    elif roundt2[j] == n_2:
+                        roundt1[j] += 1
+                new_round2 = []
+                for j in range(len(roundt1)):
+                    new_round2.append(teamNames[roundt1[j]-1] + " vs " + teamNames[roundt2[j]-1])
+                df["round" + str(i)] = new_round2
+            print(df)
+            result = df.to_dict()
+            
+            return jsonify(result)
+        else:
+            teamNames.append('dummy')
+            n_2+=1
+            n = n_2 // 2
+            roundt1 = []
+            roundt2 = []
+            roundt1.append(n_2)
+            roundt2.append(1)
+            
+            for i in range(2, n + 1):
+                roundt1.append(n_2 - i + 1)
+                roundt2.append(i)
+
+            new_round = []
+            for i in range(len(roundt1)):
+                new_round.append(teamNames[roundt1[i]-1] + " vs " + teamNames[roundt2[i]-1])
+            
+            df = pd.DataFrame()
+            df["round1"] = new_round
+            
+            for i in range(2, n_2):
+                for j in range(len(roundt1)):
+                    if roundt1[j] != n_2 and roundt2[j] != n_2:
+                        roundt1[j] += 1
+                        if roundt1[j] > n_2 - 1:
+                            roundt1[j] -= (n_2 - 1)
+                        roundt2[j] += 1
+                        if roundt2[j] > n_2 - 1:
+                            roundt2[j] -= (n_2 - 1)
+                    elif roundt1[j] == n_2:
+                        roundt2[j] += 1
+                    elif roundt2[j] == n_2:
+                        roundt1[j] += 1
+                new_round2 = []
+                for j in range(len(roundt1)):
+                    new_round2.append(teamNames[roundt1[j]-1] + " vs " + teamNames[roundt2[j]-1])
+                df["round" + str(i)] = new_round2
+            
+            df.drop([0], axis=0, inplace=True)
+            print(df)
+            result = df.to_dict()
+            
+            return jsonify(result)
+            
     except Exception as e:
         return jsonify({'error': str(e)}), 400
     
@@ -100,107 +145,213 @@ def HomeAwaySchedule():
         numberOfTeams = data.get('numberOfTeams')
         teamNames = data.get('teamNames')
         n_2 = int(numberOfTeams)
-        n = n_2 // 2
-        roundt1 = []
-        roundt2 = []
-        roundt1.append(n_2)
-        roundt2.append(1)
-        
-        for i in range(2, n + 1):
-            roundt1.append(n_2 - i + 1)
-            roundt2.append(i)
+        if(n_2%2==0):
+            n = n_2 // 2
+            roundt1 = []
+            roundt2 = []
+            roundt1.append(n_2)
+            roundt2.append(1)
+            
+            for i in range(2, n + 1):
+                roundt1.append(n_2 - i + 1)
+                roundt2.append(i)
 
-        new_round=[]
-        for i in range(len(roundt1)):
-            new_round.append(teamNames[roundt1[i]-1] + " vs " + teamNames[roundt2[i]-1])
+            new_round=[]
+            for i in range(len(roundt1)):
+                new_round.append(teamNames[roundt1[i]-1] + " vs " + teamNames[roundt2[i]-1])
 
-        df = pd.DataFrame()
-        df["round1"] = new_round
-        
-        for i in range(2,n_2):
-            roundt1[0],roundt2[0]=roundt2[0],roundt1[0]
-            if(i%2==0):
-                roundt1[0]+=n
-                if(roundt1[0]>n_2-1):
-                    roundt1[0]-=n_2-1
-            else:
-                roundt2[0]+=n
-                if(roundt2[0]>n_2-1):
-                    roundt2[0]-=n_2-1
-                
-                
-            for j in range(1,len(roundt1)):
-                if roundt1[j] != n_2 and roundt2[j] != n_2:
-                    roundt1[j] += n
-                    if roundt1[j] > n_2 - 1:
-                        roundt1[j] -= (n_2 - 1)
-                    roundt2[j] += n
-                    if roundt2[j] > n_2 - 1:
-                        roundt2[j] -= (n_2 - 1)
-                elif roundt1[j] == n_2:
-                    roundt2[j] += n
-                elif roundt2[j] == n_2:
-                    roundt1[j] += n
+            df = pd.DataFrame()
+            df["round1"] = new_round
+            
+            for i in range(2,n_2):
+                roundt1[0],roundt2[0]=roundt2[0],roundt1[0]
+                if(i%2==0):
+                    roundt1[0]+=n
+                    if(roundt1[0]>n_2-1):
+                        roundt1[0]-=n_2-1
+                else:
+                    roundt2[0]+=n
+                    if(roundt2[0]>n_2-1):
+                        roundt2[0]-=n_2-1
+                    
+                    
+                for j in range(1,len(roundt1)):
+                    if roundt1[j] != n_2 and roundt2[j] != n_2:
+                        roundt1[j] += n
+                        if roundt1[j] > n_2 - 1:
+                            roundt1[j] -= (n_2 - 1)
+                        roundt2[j] += n
+                        if roundt2[j] > n_2 - 1:
+                            roundt2[j] -= (n_2 - 1)
+                    elif roundt1[j] == n_2:
+                        roundt2[j] += n
+                    elif roundt2[j] == n_2:
+                        roundt1[j] += n
 
-            new_round2 = []
-            for j in range(len(roundt1)):
-                new_round2.append(teamNames[roundt1[j]-1] + " vs " + teamNames[roundt2[j]-1])
-            df["round" + str(i)] = new_round2
+                new_round2 = []
+                for j in range(len(roundt1)):
+                    new_round2.append(teamNames[roundt1[j]-1] + " vs " + teamNames[roundt2[j]-1])
+                df["round" + str(i)] = new_round2
 
-        roundt1=[]
-        roundt2=[]
-        roundt1.append(1)
-        roundt2.append(n_2)
+            roundt1=[]
+            roundt2=[]
+            roundt1.append(1)
+            roundt2.append(n_2)
 
-        for i in range(2, n + 1):
-            roundt1.append(i)
-            roundt2.append(n_2 - i + 1)
+            for i in range(2, n + 1):
+                roundt1.append(i)
+                roundt2.append(n_2 - i + 1)
 
-        new_round=[]
-        for i in range(len(roundt1)):
-            new_round.append(teamNames[roundt1[i]-1] + " vs " + teamNames[roundt2[i]-1])
+            new_round=[]
+            for i in range(len(roundt1)):
+                new_round.append(teamNames[roundt1[i]-1] + " vs " + teamNames[roundt2[i]-1])
 
-        # df = pd.DataFrame()
-        df["round"+str(n_2)] = new_round
-        for i in range(n_2+1,2*n_2-1):
-        #     print('round',i)
-            roundt1[0],roundt2[0]=roundt2[0],roundt1[0]
-            if(i%2==0):
-                roundt1[0]+=n
-                if(roundt1[0]>n_2-1):
-                    roundt1[0]-=n_2-1
-            else:
-                roundt2[0]+=n
-                if(roundt2[0]>n_2-1):
-                    roundt2[0]-=n_2-1
-                
-                
-            for j in range(1,len(roundt1)):
-                if roundt1[j] != n_2 and roundt2[j] != n_2:
-                    roundt1[j] += n
-                    if roundt1[j] > n_2 - 1:
-                        roundt1[j] -= (n_2 - 1)
-                    roundt2[j] += n
-                    if roundt2[j] > n_2 - 1:
-                        roundt2[j] -= (n_2 - 1)
-                elif roundt1[j] == n_2:
-                    roundt2[j] += n
-                elif roundt2[j] == n_2:
-                    roundt1[j] += n
-        #     print('roundt1:',roundt1)
-        #     print('roundt2:',roundt2)
-            new_round2 = []
-            for j in range(len(roundt1)):
-                new_round2.append(teamNames[roundt1[j]-1] + " vs " + teamNames[roundt2[j]-1])
-        #     print(new_round2)
-            df["round" + str(i)] = new_round2
+            # df = pd.DataFrame()
+            df["round"+str(n_2)] = new_round
+            for i in range(n_2+1,2*n_2-1):
+            #     print('round',i)
+                roundt1[0],roundt2[0]=roundt2[0],roundt1[0]
+                if(i%2==0):
+                    roundt1[0]+=n
+                    if(roundt1[0]>n_2-1):
+                        roundt1[0]-=n_2-1
+                else:
+                    roundt2[0]+=n
+                    if(roundt2[0]>n_2-1):
+                        roundt2[0]-=n_2-1
+                    
+                    
+                for j in range(1,len(roundt1)):
+                    if roundt1[j] != n_2 and roundt2[j] != n_2:
+                        roundt1[j] += n
+                        if roundt1[j] > n_2 - 1:
+                            roundt1[j] -= (n_2 - 1)
+                        roundt2[j] += n
+                        if roundt2[j] > n_2 - 1:
+                            roundt2[j] -= (n_2 - 1)
+                    elif roundt1[j] == n_2:
+                        roundt2[j] += n
+                    elif roundt2[j] == n_2:
+                        roundt1[j] += n
+            #     print('roundt1:',roundt1)
+            #     print('roundt2:',roundt2)
+                new_round2 = []
+                for j in range(len(roundt1)):
+                    new_round2.append(teamNames[roundt1[j]-1] + " vs " + teamNames[roundt2[j]-1])
+            #     print(new_round2)
+                df["round" + str(i)] = new_round2
 
 
 
-        print(df)
-        result = df.to_dict()
-        
-        return jsonify(result)
+            print(df)
+            result = df.to_dict()
+            
+            return jsonify(result)
+        else:
+            teamNames.append('dummy')
+            n_2+=1
+            n = n_2 // 2
+            roundt1 = []
+            roundt2 = []
+            roundt1.append(n_2)
+            roundt2.append(1)
+            
+            for i in range(2, n + 1):
+                roundt1.append(n_2 - i + 1)
+                roundt2.append(i)
+
+            new_round=[]
+            for i in range(len(roundt1)):
+                new_round.append(teamNames[roundt1[i]-1] + " vs " + teamNames[roundt2[i]-1])
+
+            df = pd.DataFrame()
+            df["round1"] = new_round
+            
+            for i in range(2,n_2):
+                roundt1[0],roundt2[0]=roundt2[0],roundt1[0]
+                if(i%2==0):
+                    roundt1[0]+=n
+                    if(roundt1[0]>n_2-1):
+                        roundt1[0]-=n_2-1
+                else:
+                    roundt2[0]+=n
+                    if(roundt2[0]>n_2-1):
+                        roundt2[0]-=n_2-1
+                    
+                    
+                for j in range(1,len(roundt1)):
+                    if roundt1[j] != n_2 and roundt2[j] != n_2:
+                        roundt1[j] += n
+                        if roundt1[j] > n_2 - 1:
+                            roundt1[j] -= (n_2 - 1)
+                        roundt2[j] += n
+                        if roundt2[j] > n_2 - 1:
+                            roundt2[j] -= (n_2 - 1)
+                    elif roundt1[j] == n_2:
+                        roundt2[j] += n
+                    elif roundt2[j] == n_2:
+                        roundt1[j] += n
+
+                new_round2 = []
+                for j in range(len(roundt1)):
+                    new_round2.append(teamNames[roundt1[j]-1] + " vs " + teamNames[roundt2[j]-1])
+                df["round" + str(i)] = new_round2
+
+            roundt1=[]
+            roundt2=[]
+            roundt1.append(1)
+            roundt2.append(n_2)
+
+            for i in range(2, n + 1):
+                roundt1.append(i)
+                roundt2.append(n_2 - i + 1)
+
+            new_round=[]
+            for i in range(len(roundt1)):
+                new_round.append(teamNames[roundt1[i]-1] + " vs " + teamNames[roundt2[i]-1])
+
+            # df = pd.DataFrame()
+            df["round"+str(n_2)] = new_round
+            for i in range(n_2+1,2*n_2-1):
+            #     print('round',i)
+                roundt1[0],roundt2[0]=roundt2[0],roundt1[0]
+                if(i%2==0):
+                    roundt1[0]+=n
+                    if(roundt1[0]>n_2-1):
+                        roundt1[0]-=n_2-1
+                else:
+                    roundt2[0]+=n
+                    if(roundt2[0]>n_2-1):
+                        roundt2[0]-=n_2-1
+                    
+                    
+                for j in range(1,len(roundt1)):
+                    if roundt1[j] != n_2 and roundt2[j] != n_2:
+                        roundt1[j] += n
+                        if roundt1[j] > n_2 - 1:
+                            roundt1[j] -= (n_2 - 1)
+                        roundt2[j] += n
+                        if roundt2[j] > n_2 - 1:
+                            roundt2[j] -= (n_2 - 1)
+                    elif roundt1[j] == n_2:
+                        roundt2[j] += n
+                    elif roundt2[j] == n_2:
+                        roundt1[j] += n
+            #     print('roundt1:',roundt1)
+            #     print('roundt2:',roundt2)
+                new_round2 = []
+                for j in range(len(roundt1)):
+                    new_round2.append(teamNames[roundt1[j]-1] + " vs " + teamNames[roundt2[j]-1])
+            #     print(new_round2)
+                df["round" + str(i)] = new_round2
+
+
+            df.drop([0],axis=0,inplace=True)
+            print(df)
+            result = df.to_dict()
+            
+            return jsonify(result)
+
     except Exception as e:
         return jsonify({'error': str(e)}), 400
     

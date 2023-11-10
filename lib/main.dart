@@ -120,7 +120,7 @@ class _MyAppState extends State<MyApp> {
                       controller: _controller,
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
-                        labelText: 'Number of teams(even)',
+                        labelText: 'Number of teams',
                       ),
                     ),
                   ),
