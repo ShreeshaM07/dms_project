@@ -550,7 +550,9 @@ class _ScheduleDatesState extends State<ScheduleDates> {
                       elevation: 2,
                       child: ListTile(
                         subtitle: Center(
-                            child: Text(tournamentSchedule[index]['date'])),
+                            child: Text(tournamentSchedule[index]['date'] +
+                                '\nRound: ' +
+                                tournamentSchedule[index]['round'].toString())),
                         title: Center(
                             child: Text(
                                 tournamentSchedule[index]['matchDetails'])),
